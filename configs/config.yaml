@@ -8,3 +8,4 @@ database:
   password: "password"
   name: "subscriptions"
   sslmode: "disable"
+  max_db_conns: 20
