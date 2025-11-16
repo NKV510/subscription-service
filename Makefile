@@ -18,6 +18,7 @@ build:
 
 up:
 	docker compose -f docker-compose.yml up -d $(c)
+	docker compose exec postgres psql -U postgres -d subscriptions -f /docker-entrypoint-initdb.d/create_subs_table.sql
 
 start:
 	docker compose -f docker-compose.yml start $(c)
