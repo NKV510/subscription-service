@@ -38,14 +38,13 @@ func NewDBPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 	for i := 0; i < maxRetries; i++ {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 
-		slog.Info("Attempt %d/%d: Connecting to database at %s:%s", i+1, maxRetries, cfg.Database.Host, cfg.Database.Port)
+		slog.Info("Connecting to database at %s:%s", cfg.Database.Host, cfg.Database.Port)
 
 		dbPool, err = pgxpool.NewWithConfig(ctx, dbConfig)
 		if err != nil {
 			cancel()
-			slog.Debug("Attempt %d/%d: Failed to connect to database: %v", i+1, maxRetries, err)
+			slog.Debug("Attempt", i+1, "/", "Failed to connect to database:", maxRetries, err)
 			if i < maxRetries-1 {
-				slog.Debug("Retrying in %v...", retryDelay)
 				time.Sleep(retryDelay)
 				continue
 			}
@@ -57,7 +56,6 @@ func NewDBPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 			slog.Debug("Attempt %d/%d: Database ping failed: %v", i+1, maxRetries, err)
 			dbPool.Close()
 			if i < maxRetries-1 {
-				slog.Debug("Retrying in %v...", retryDelay)
 				time.Sleep(retryDelay)
 				continue
 			}
@@ -65,7 +63,7 @@ func NewDBPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
 		}
 
 		cancel()
-		slog.Info("Successfully connected to database on attempt %d", i+1)
+		slog.Info("Successfully connected to database on attempt", i+1)
 		break
 	}
 

@@ -9,13 +9,31 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/NKV510/subscription-service/docs"
 	"github.com/NKV510/subscription-service/internal/config"
 	"github.com/NKV510/subscription-service/internal/handlers"
 	"github.com/NKV510/subscription-service/internal/repository/postgres"
 	"github.com/NKV510/subscription-service/internal/service"
 	"github.com/NKV510/subscription-service/pkg/database"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Subscription Service API
+// @version 1.0
+// @description REST API for managing user subscriptions
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api/v1
 
 func main() {
 	// Инициализация логгера
@@ -47,15 +65,21 @@ func main() {
 	router.Use(handlers.LoggingMiddleware())
 
 	// Маршруты
-	api := router.Group("/api/v1")
+	subscriptions := router.Group("/subscriptions")
 	{
-		subscriptions := api.Group("/subscriptions")
-		{
-			subscriptions.POST("", subscriptionHandler.CreateSubscription)
-			subscriptions.GET("/:id", subscriptionHandler.GetSubscriptionByID)
-		}
+		subscriptions.POST("", subscriptionHandler.CreateSubscription)
+		subscriptions.GET("/:id", subscriptionHandler.GetSubscriptionByID)
+		subscriptions.PUT("/:id", subscriptionHandler.UpdateSubscription)
+		subscriptions.DELETE("/:id", subscriptionHandler.DeleteSubscription)
+		subscriptions.GET("", subscriptionHandler.GetSubscriptionsByUserID)
 	}
 
+	// Ручка для аналитики
+	analytics := router.Group("/analytics")
+	{
+		analytics.GET("/total", subscriptionHandler.GetTotalSpent)
+	}
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	// Health check
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
